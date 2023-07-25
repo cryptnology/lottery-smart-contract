@@ -39,6 +39,7 @@ contract Lottery is VRFConsumerBaseV2 {
      */
     error Lottery__NotEnoughEthSend();
     error Lottery__TransferFailed();
+    error Lottery__RaffleNotOpen();
 
     /**
      * Type declarations
@@ -92,6 +93,9 @@ contract Lottery is VRFConsumerBaseV2 {
     function enterLottery() external payable {
         if (msg.value < i_entranceFee) {
             revert Lottery__NotEnoughEthSend();
+        }
+        if (s_raffleState != LotteryState.OPEN) {
+            revert Lottery__RaffleNotOpen();
         }
         s_players.push(payable(msg.sender));
         emit EnteredLottery(msg.sender);
