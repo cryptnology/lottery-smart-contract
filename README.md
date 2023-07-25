@@ -1,3 +1,3 @@
 <!-- @format -->
 
-# Smart Contract Lottery
+# Lottery Smart Contract
