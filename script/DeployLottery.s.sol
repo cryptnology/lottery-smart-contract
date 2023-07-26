@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {Lottery} from "../src/Lottery.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
+import {CreateSubscription, FundSubscription, AddConsumer} from "./Interactions.s.sol";
 
 contract DeployLottery is Script {
     function run() external returns (Lottery, HelperConfig) {
@@ -19,6 +20,14 @@ contract DeployLottery is Script {
             uint256 deployerKey
         ) = helperConfig.activeNetworkConfig();
 
+        if (subscriptionId == 0) {
+            CreateSubscription createSubscription = new CreateSubscription();
+            subscriptionId = createSubscription.createSubscription(vrfCoordinator, deployerKey);
+
+            FundSubscription fundSubscription = new FundSubscription();
+            fundSubscription.fundSubscription(vrfCoordinator, subscriptionId, link, deployerKey);
+        }
+
         vm.startBroadcast();
         Lottery lottery = new Lottery(
             entranceFee,
@@ -29,6 +38,9 @@ contract DeployLottery is Script {
             callbackGasLimit
         );
         vm.stopBroadcast();
+
+        AddConsumer addConsumer = new AddConsumer();
+        addConsumer.addConsumer(address(lottery), vrfCoordinator, subscriptionId, deployerKey);
 
         return (lottery, helperConfig);
     }
