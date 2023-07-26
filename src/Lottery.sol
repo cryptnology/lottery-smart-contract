@@ -132,9 +132,6 @@ contract Lottery is VRFConsumerBaseV2 {
     /**
      * External & public view & pure functions
      */
-    function getEntranceFee() external view returns (uint256) {
-        return i_entranceFee;
-    }
 
     /**
      * @dev This is the function that the Chainlink Automation nodes call
@@ -156,5 +153,32 @@ contract Lottery is VRFConsumerBaseV2 {
         bool hasPlayers = s_players.length > 0;
         upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers;
         return (upkeepNeeded, "0x0");
+    }
+
+    /**
+     * Getter Functions
+     */
+    function getEntranceFee() external view returns (uint256) {
+        return i_entranceFee;
+    }
+
+    function getPlayers() external view returns (address payable[] memory) {
+        return s_players;
+    }
+
+    function getPlayer(uint256 indexOfPlayer) external view returns (address payable) {
+        return s_players[indexOfPlayer];
+    }
+
+    function getRaffleState() external view returns (LotteryState) {
+        return s_lotteryState;
+    }
+
+    function getRecentWinner() external view returns (address) {
+        return s_recentWinner;
+    }
+
+    function getLastTimeStamp() external view returns (uint256) {
+        return s_lastTimeStamp;
     }
 }
