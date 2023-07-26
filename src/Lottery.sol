@@ -170,7 +170,7 @@ contract Lottery is VRFConsumerBaseV2 {
         return s_players[indexOfPlayer];
     }
 
-    function getRaffleState() external view returns (LotteryState) {
+    function getLotteryState() external view returns (LotteryState) {
         return s_lotteryState;
     }
 
