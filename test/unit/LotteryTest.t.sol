@@ -149,4 +149,46 @@ contract LotteryTest is StdCheats, Test {
         assert(uint256(requestId) > 0);
         assert(uint256(lotteryState) == 1);
     }
+
+    /**
+     * fulfillRandomWords()
+     */
+
+    /* Fuzz test with randomRequestId */
+    function testFulfillRandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256 randomRequestId)
+        public
+        lotteryEnteredAndTimePassed
+        skipFork
+    {
+        vm.expectRevert("nonexistent request");
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(randomRequestId, address(lottery));
+    }
+
+    function testFulfilRandomWordsPicksAWinnerResetsAndSendsMoney() public lotteryEnteredAndTimePassed skipFork {
+        uint256 additionalEntrants = 5;
+        uint256 startingIndex = 1;
+        for (uint256 i = startingIndex; i < startingIndex + additionalEntrants; i++) {
+            address player = address(uint160(i));
+            hoax(player, STARTING_USER_BALANCE);
+            lottery.enterLottery{value: entranceFee}();
+        }
+
+        uint256 prize = entranceFee * (additionalEntrants + 1);
+
+        vm.recordLogs();
+        lottery.performUpkeep(""); //* Emit requestId
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        bytes32 requestId = entries[1].topics[1];
+
+        uint256 previousTimestamp = lottery.getLastTimeStamp();
+
+        //* Pretend to be chainlinkVRF to get random number & pick winner
+        VRFCoordinatorV2Mock(vrfCoordinator).fulfillRandomWords(uint256(requestId), address(lottery));
+
+        assert(uint256(lottery.getLotteryState()) == 0);
+        assert(lottery.getRecentWinner() != address(0));
+        assert(lottery.getPlayers().length == 0);
+        assert(previousTimestamp < lottery.getLastTimeStamp());
+        assert(lottery.getRecentWinner().balance == STARTING_USER_BALANCE + prize - entranceFee);
+    }
 }
